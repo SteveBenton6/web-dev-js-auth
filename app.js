@@ -28,8 +28,8 @@ app.use(session({
   secret: "super-top-secret",
   resave: false,
   saveUninitialized: false,
-  store: "mongodb"
-});
+  store: sessionStore
+}));
 
 app.use(demoRoutes);
 
