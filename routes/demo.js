@@ -34,7 +34,34 @@ router.post("/signup", async function (req, res) {
   res.redirect("/login");
 });
 
-router.post("/login", async function (req, res) {});
+router.post("/login", async function (req, res) {
+  const userData = req.body;
+  const enteredEmail = userData.email;
+  const enteredPassword = userData.password;
+
+  const existingUser = await db
+    .getDb()
+    .collection("users")
+    .findOne({ email: enteredEmail });
+
+  if (!existingUser) {
+    console.log("Could not log in - user doesn't exist!");
+    return res.redirect("/login");
+  }
+
+  const passwordsAreEqual = await bcrypt.compare(
+    enteredPassword,
+    existingUser.password,
+  );
+
+  if (!passwordsAreEqual) {
+    console.log("Could not log in - passwords don't match!");
+    return res.redirect("/login");
+  }
+
+  console.log("User is authenticated!");
+  return res.redirect("/admin");
+});
 
 router.get("/admin", function (req, res) {
   res.render("admin");
