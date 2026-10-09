@@ -101,7 +101,10 @@ router.post("/login", async function (req, res) {
     return res.redirect("/login");
   }
 
-  req.session.user = { id: existingUser._id, email: existingUser.email };
+  req.session.user = {
+    id: existingUser._id.toString(),
+    email: existingUser.email,
+  };
   req.session.isAuthenticated = true;
   req.session.save(function () {
     res.redirect("/admin");
@@ -109,6 +112,10 @@ router.post("/login", async function (req, res) {
 });
 
 router.get("/admin", requireAuth, function (req, res) {
+  if (!req.session.isAuthenticated) {
+    // if (!req.session.user)
+    return res.status(401).render("401");
+  }
   res.render("admin");
 });
 
