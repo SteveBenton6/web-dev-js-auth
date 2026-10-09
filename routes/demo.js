@@ -120,14 +120,15 @@ router.get("/admin", requireAuth, function (req, res) {
 });
 
 router.post("/logout", function (req, res) {
-  req.session.destroy(function (error) {
-    if (error) {
-      console.log("Could not log out - please try again.");
-      return res.redirect("/admin");
-    }
-
-    res.redirect("/");
-  });
+  // req.session.destroy(function (error) {
+  //   if (error) {
+  //     console.log("Could not log out - please try again.");
+  //     return res.redirect("/admin");
+  //   }
+  // });
+  req.session.user = null;
+  req.session.isAuthenticated = false;
+  res.redirect("/");
 });
 
 module.exports = router;
