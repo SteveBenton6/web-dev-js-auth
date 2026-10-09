@@ -5,29 +5,49 @@ const db = require("../data/database");
 
 const router = express.Router();
 
+function redirectIfAuthenticated(req, res, next) {
+  if (req.session.isAuthenticated) {
+    return res.redirect("/admin");
+  }
+
+  next();
+}
+
+function requireAuth(req, res, next) {
+  if (!req.session.isAuthenticated) {
+    return res.status(401).render("401");
+  }
+
+  next();
+}
+
 router.get("/", function (req, res) {
+  if (req.session.isAuthenticated) {
+    return res.redirect("/admin");
+  }
+
   res.render("welcome");
 });
 
-router.get("/signup", function (req, res) {
+router.get("/signup", redirectIfAuthenticated, function (req, res) {
   res.render("signup");
 });
 
-router.get("/login", function (req, res) {
+router.get("/login", redirectIfAuthenticated, function (req, res) {
   res.render("login");
 });
 
 router.post("/signup", async function (req, res) {
   const userData = req.body;
-  const enteredEmail = userData.email;
-  const enteredConfirmEmail = userData["confirm-email"];
-  const enteredPassword = userData.password;
+  const enteredEmail = (userData.email || "").trim();
+  const enteredConfirmEmail = (userData["confirm-email"] || "").trim();
+  const enteredPassword = (userData.password || "").trim();
 
   if (
     !enteredEmail ||
     !enteredConfirmEmail ||
     !enteredPassword ||
-    enteredPassword.trim < 9 ||
+    enteredPassword.length < 9 ||
     enteredEmail !== enteredConfirmEmail ||
     !enteredEmail.includes("@")
   ) {
@@ -58,8 +78,8 @@ router.post("/signup", async function (req, res) {
 
 router.post("/login", async function (req, res) {
   const userData = req.body;
-  const enteredEmail = userData.email;
-  const enteredPassword = userData.password;
+  const enteredEmail = (userData.email || "").trim();
+  const enteredPassword = userData.password || "";
 
   const existingUser = await db
     .getDb()
@@ -81,14 +101,26 @@ router.post("/login", async function (req, res) {
     return res.redirect("/login");
   }
 
-  console.log("User is authenticated!");
-  return res.redirect("/admin");
+  req.session.user = { id: existingUser._id, email: existingUser.email };
+  req.session.isAuthenticated = true;
+  req.session.save(function () {
+    res.redirect("/admin");
+  });
 });
 
-router.get("/admin", function (req, res) {
+router.get("/admin", requireAuth, function (req, res) {
   res.render("admin");
 });
 
-router.post("/logout", function (req, res) {});
+router.post("/logout", function (req, res) {
+  req.session.destroy(function (error) {
+    if (error) {
+      console.log("Could not log out - please try again.");
+      return res.redirect("/admin");
+    }
+
+    res.redirect("/");
+  });
+});
 
 module.exports = router;

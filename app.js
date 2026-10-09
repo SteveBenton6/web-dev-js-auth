@@ -32,6 +32,11 @@ app.use(
   }),
 );
 
+app.use(function (req, res, next) {
+  res.locals.isAuth = req.session && req.session.isAuthenticated;
+  next();
+});
+
 app.use(demoRoutes);
 
 app.use(function (error, req, res, next) {
