@@ -30,7 +30,19 @@ router.get("/", function (req, res) {
 });
 
 router.get("/signup", redirectIfAuthenticated, function (req, res) {
-  res.render("signup");
+  let sessionInputData = req.session.inputData;
+  if (!sessionInputData) {
+    sessionInputData = {
+      hasError: false,
+      email: "",
+      confirmEmail: "",
+      password: "",
+    };
+  }
+
+  req.session.inputData = null;
+
+  res.render("signup", { inputData: sessionInputData });
 });
 
 router.get("/login", redirectIfAuthenticated, function (req, res) {
@@ -51,8 +63,18 @@ router.post("/signup", async function (req, res) {
     enteredEmail !== enteredConfirmEmail ||
     !enteredEmail.includes("@")
   ) {
-    console.log("Incorrect signup data");
-    return res.redirect("/signup");
+    req.session.inputData = {
+      hasError: true,
+      message: "invalid input - please check your data.",
+      email: enteredEmail,
+      confirmEmail: enteredConfirmEmail,
+      password: enteredPassword,
+    };
+
+    req.session.save(function () {
+      res.redirect("/signup");
+    });
+    return;
   }
 
   const existingUser = await db
