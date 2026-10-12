@@ -23,14 +23,14 @@ function requireAuth(req, res, next) {
 }
 
 router.get("/", function (req, res) {
-  if (req.session.isAuthenticated) {
-    return res.redirect("/admin");
-  }
+  // if (req.session.isAuthenticated) {
+  //   return res.redirect("/admin");
+  // }
 
   res.render("welcome");
 });
 
-router.get("/signup", redirectIfAuthenticated, function (req, res) {
+router.get("/signup", function (req, res) {
   let sessionInputData = req.session.inputData;
   if (!sessionInputData) {
     sessionInputData = {
@@ -46,7 +46,7 @@ router.get("/signup", redirectIfAuthenticated, function (req, res) {
   res.render("signup", { inputData: sessionInputData });
 });
 
-router.get("/login", redirectIfAuthenticated, function (req, res) {
+router.get("/login", function (req, res) {
   let sessionInputData = req.session.inputData;
   if (!sessionInputData) {
     sessionInputData = {

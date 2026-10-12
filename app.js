@@ -3,6 +3,7 @@ const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const mongodbStore = require("connect-mongodb-session");
+const { ObjectId } = require("mongodb");
 
 const db = require("./data/database");
 const demoRoutes = require("./routes/demo");
@@ -35,9 +36,35 @@ app.use(
   }),
 );
 
-app.use(function (req, res, next) {
-  res.locals.isAuth = req.session && req.session.isAuthenticated;
-  next();
+app.use(async function (req, res, next) {
+  res.locals.isAuth = false;
+  res.locals.isAdmin = false;
+
+  const user = req.session.user;
+  const isAuth = req.session.isAuthenticated;
+
+  if (!user || !isAuth) {
+    return next();
+  }
+
+  try {
+    const userDoc = await db
+      .getDb()
+      .collection("users")
+      .findOne({ _id: ObjectId.createFromHexString(req.session.user.id) });
+
+    if (!userDoc) {
+      return next();
+    }
+
+    // const isAdmin = userDoc.isAdmin;
+
+    res.locals.isAuth = isAuth;
+    res.locals.isAdmin = userDoc.isAdmin === true;
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use(demoRoutes);
